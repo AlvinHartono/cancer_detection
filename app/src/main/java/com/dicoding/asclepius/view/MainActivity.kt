@@ -7,9 +7,12 @@ import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import com.dicoding.asclepius.databinding.ActivityMainBinding
+import com.dicoding.asclepius.helper.ImageClassifierHelper
+import org.tensorflow.lite.task.vision.classifier.Classifications
 
 class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
+    private lateinit var imageClassifierHelper: ImageClassifierHelper
 
     private var currentImageUri: Uri? = null
 
@@ -30,6 +33,20 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        imageClassifierHelper = ImageClassifierHelper(
+            context = this,
+            classifierListener = object : ImageClassifierHelper.ClassifierListener{
+                override fun onError(error: String) {
+                    showToast("Terjadi kesalahan $error")
+                }
+
+                override fun onResults(results: List<Classifications>?, inferenceTime: Long) {
+
+                }
+
+            },
+        )
+
         binding.galleryButton.setOnClickListener {
             startGallery()
         }
@@ -40,20 +57,24 @@ class MainActivity : AppCompatActivity() {
         val intent = Intent()
         intent.action = Intent.ACTION_GET_CONTENT
         intent.type = "image/*"
-        val chooser = Intent.createChooser(intent, "Choose a Picture")
 
+        val chooser = Intent.createChooser(intent, "Choose a Picture")
         launcherIntentGallery.launch(chooser)
     }
 
     private fun showImage() {
-        // TODO: Menampilkan gambar sesuai Gallery yang dipilih.
+        // Menampilkan gambar sesuai Gallery yang dipilih.
         currentImageUri?.let {
             binding.previewImageView.setImageURI(it)
         }
     }
 
     private fun analyzeImage() {
-        // TODO: Menganalisa gambar yang berhasil ditampilkan.
+        // Menganalisa gambar yang berhasil ditampilkan.
+        currentImageUri?.let {
+            imageClassifierHelper.classifyStaticImage(it)
+        } ?: showToast("Pilih gambar terlebih dahulu")
+
     }
 
     private fun moveToResult() {
