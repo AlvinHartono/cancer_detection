@@ -4,6 +4,7 @@ import android.content.Intent
 import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.view.View
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import com.dicoding.asclepius.databinding.ActivityMainBinding
@@ -15,16 +16,19 @@ class MainActivity : AppCompatActivity() {
     private lateinit var imageClassifierHelper: ImageClassifierHelper
 
     private var currentImageUri: Uri? = null
+    private var currentResult: List<Classifications>? = null
 
     private val launcherIntentGallery = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
         if (result.resultCode == RESULT_OK) {
             val selectedImg = result.data?.data as Uri
-
             currentImageUri = selectedImg
+
+            showLoading(true)
             showToast("Gambar berhasil dipilih")
             showImage()
+            analyzeImage()
         }
     }
 
@@ -37,11 +41,13 @@ class MainActivity : AppCompatActivity() {
             context = this,
             classifierListener = object : ImageClassifierHelper.ClassifierListener{
                 override fun onError(error: String) {
+                    showLoading(false)
                     showToast("Terjadi kesalahan $error")
                 }
 
                 override fun onResults(results: List<Classifications>?, inferenceTime: Long) {
-
+                    showLoading(false)
+                    currentResult = results
                 }
 
             },
@@ -49,6 +55,9 @@ class MainActivity : AppCompatActivity() {
 
         binding.galleryButton.setOnClickListener {
             startGallery()
+        }
+        binding.analyzeButton.setOnClickListener {
+            moveToResult()
         }
     }
 
@@ -78,11 +87,27 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun moveToResult() {
-        val intent = Intent(this, ResultActivity::class.java)
+        val intent = Intent(this, ResultActivity::class.java).apply {
+            currentImageUri?.let {
+                putExtra("IMAGE_URI", it.toString())
+            }
+            currentResult?.firstOrNull()?.let { classifications ->
+                val topCategory = classifications.categories.maxByOrNull { it.score }
+                if (topCategory != null) {
+                    putExtra("CLASSIFICATION_RESULT_TEXT", topCategory.label)
+                    putExtra("CONFIDENCE", topCategory.score)
+                }
+            }
+        }
         startActivity(intent)
     }
 
     private fun showToast(message: String) {
         Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
+    }
+
+    private fun showLoading(boolean: Boolean) {
+        binding.progressIndicator.visibility = if (boolean) View.VISIBLE else View.GONE
+
     }
 }
