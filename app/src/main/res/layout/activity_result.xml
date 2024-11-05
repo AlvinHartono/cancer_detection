@@ -6,10 +6,25 @@
     android:layout_height="match_parent"
     tools:context=".view.ResultActivity">
 
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical">
+
+        <androidx.appcompat.widget.Toolbar
+            android:id="@+id/main_toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            style="@style/ToolBarCustom"
+            android:elevation="4dp"
+            android:textAlignment="center"
+            android:textStyle="bold"
+            android:theme="@style/ThemeOverlay.AppCompat.ActionBar"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:title="Detection Result" />
 
         <ImageView
             android:id="@+id/result_image"
@@ -23,6 +38,8 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_margin="16dp"
+            android:textStyle="bold"
+            android:textSize="28sp"
             android:text="@string/result" />
     </LinearLayout>
 </ScrollView>

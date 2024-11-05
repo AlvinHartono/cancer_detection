@@ -3,6 +3,7 @@ package com.dicoding.asclepius.view
 import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.view.MenuItem
 import com.dicoding.asclepius.R
 import com.dicoding.asclepius.databinding.ActivityResultBinding
 import org.tensorflow.lite.support.label.Category
@@ -17,9 +18,8 @@ class ResultActivity : AppCompatActivity() {
 
         binding = ActivityResultBinding.inflate(layoutInflater)
         setContentView(binding.root)
-
+        setSupportActionBar(binding.mainToolbar)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
-        supportActionBar?.title = getString(R.string.result)
 
         // Menampilkan hasil gambar, prediksi, dan confidence score.
         val imageUriStr = intent.getStringExtra("IMAGE_URI")
@@ -39,9 +39,16 @@ class ResultActivity : AppCompatActivity() {
         binding.resultText.text = resultBuilder.toString()
     }
 
-    override fun onNavigateUp(): Boolean {
-//        onBackPressed()
-        return true
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        return when (item.itemId) {
+            android.R.id.home -> {
+                onBackPressedDispatcher.onBackPressed()
+                true
+            }
+
+            else -> super.onOptionsItemSelected(item)
+        }
     }
 
 

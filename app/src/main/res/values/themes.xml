@@ -3,7 +3,27 @@
     <style name="Base.Theme.Asclepius" parent="Theme.Material3.DayNight.NoActionBar">
         <!-- Customize your light theme here. -->
         <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
+        <item name="colorPrimary">@color/light_red</item>
+        <item name="colorOnPrimary">@color/black</item>
+        <!-- Secondary brand color. -->
+        <item name="colorSecondary">@color/orange</item>
+        <item name="colorOnSecondary">@color/black</item>
     </style>
 
     <style name="Theme.Asclepius" parent="Base.Theme.Asclepius" />
+
+
+    <style name="ToolBarCustom" parent="Widget.AppCompat.Toolbar">
+        <item name="android:background">?attr/colorPrimary</item>
+        <item name="android:theme">@style/ThemeOverlay.AppCompat.Dark.ActionBar</item>
+        <item name="popupTheme">@style/ThemeOverlay.AppCompat.Light</item>  
+        <item name="titleTextColor">@android:color/black</item>
+    </style>
+
+
+    <style name="CustomRedButton" parent="Widget.AppCompat.Button">
+        <item name="android:minHeight">60dp</item>
+        <item name="android:textColor">@android:color/black</item>
+        <item name="android:padding">16dp</item>
+    </style>
 </resources>

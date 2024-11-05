@@ -64,6 +64,12 @@ class MainActivity : AppCompatActivity() {
             },
         )
 
+        if(currentImageUri == null){
+            binding.analyzeButton.isEnabled = false
+        } else {
+            binding.analyzeButton.isEnabled = true
+        }
+
         binding.galleryButton.setOnClickListener {
             startGallery()
 
@@ -77,8 +83,9 @@ class MainActivity : AppCompatActivity() {
         val destinationUri = Uri.fromFile(cacheDir.resolve("cropped_image__${System.currentTimeMillis()}.jpg"))
         val options = UCrop.Options().apply {
             setCompressionQuality(80)
-            setHideBottomControls(true)
+            setHideBottomControls(false)
             setFreeStyleCropEnabled(true)
+
         }
         val cropIntent = UCrop.of(selectedImg, destinationUri)
             .withOptions(options)
@@ -101,6 +108,7 @@ class MainActivity : AppCompatActivity() {
         // Menampilkan gambar sesuai Gallery yang dipilih.
         currentImageUri?.let {
             binding.previewImageView.setImageURI(it)
+            binding.analyzeButton.isEnabled = true
         }
     }
 
