@@ -9,6 +9,7 @@ import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import com.dicoding.asclepius.databinding.ActivityMainBinding
 import com.dicoding.asclepius.helper.ImageClassifierHelper
+import com.yalantis.ucrop.UCrop
 import org.tensorflow.lite.task.vision.classifier.Classifications
 
 class MainActivity : AppCompatActivity() {
@@ -18,17 +19,29 @@ class MainActivity : AppCompatActivity() {
     private var currentImageUri: Uri? = null
     private var currentResult: List<Classifications>? = null
 
+    private val launcherIntentCrop = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == RESULT_OK) {
+            val croppedUri = UCrop.getOutput(result.data!!)
+            croppedUri?.let { imageUri ->
+                currentImageUri = imageUri
+                showToast("Gambar berhasil dicrop")
+                showImage()
+                analyzeImage()
+            }
+        }
+    }
+
     private val launcherIntentGallery = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
         if (result.resultCode == RESULT_OK) {
             val selectedImg = result.data?.data as Uri
             currentImageUri = selectedImg
-
-            showLoading(true)
             showToast("Gambar berhasil dipilih")
-            showImage()
-            analyzeImage()
+
+            startUCrop(selectedImg)
         }
     }
 
@@ -39,14 +52,12 @@ class MainActivity : AppCompatActivity() {
 
         imageClassifierHelper = ImageClassifierHelper(
             context = this,
-            classifierListener = object : ImageClassifierHelper.ClassifierListener{
+            classifierListener = object : ImageClassifierHelper.ClassifierListener {
                 override fun onError(error: String) {
-                    showLoading(false)
                     showToast("Terjadi kesalahan $error")
                 }
 
                 override fun onResults(results: List<Classifications>?, inferenceTime: Long) {
-                    showLoading(false)
                     currentResult = results
                 }
 
@@ -55,10 +66,25 @@ class MainActivity : AppCompatActivity() {
 
         binding.galleryButton.setOnClickListener {
             startGallery()
+
         }
         binding.analyzeButton.setOnClickListener {
             moveToResult()
         }
+    }
+
+    private fun startUCrop(selectedImg: Uri) {
+        val destinationUri = Uri.fromFile(cacheDir.resolve("cropped_image__${System.currentTimeMillis()}.jpg"))
+        val options = UCrop.Options().apply {
+            setCompressionQuality(80)
+            setHideBottomControls(true)
+            setFreeStyleCropEnabled(true)
+        }
+        val cropIntent = UCrop.of(selectedImg, destinationUri)
+            .withOptions(options)
+            .getIntent(this)
+
+        launcherIntentCrop.launch(cropIntent)
     }
 
     private fun startGallery() {
@@ -104,10 +130,5 @@ class MainActivity : AppCompatActivity() {
 
     private fun showToast(message: String) {
         Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
-    }
-
-    private fun showLoading(boolean: Boolean) {
-        binding.progressIndicator.visibility = if (boolean) View.VISIBLE else View.GONE
-
     }
 }
