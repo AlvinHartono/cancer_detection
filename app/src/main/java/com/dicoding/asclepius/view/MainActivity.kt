@@ -4,9 +4,9 @@ import android.content.Intent
 import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.view.View
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.viewModels
 import com.dicoding.asclepius.databinding.ActivityMainBinding
 import com.dicoding.asclepius.helper.ImageClassifierHelper
 import com.yalantis.ucrop.UCrop
@@ -16,8 +16,10 @@ class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     private lateinit var imageClassifierHelper: ImageClassifierHelper
 
-    private var currentImageUri: Uri? = null
+
+//    private var currentImageUri: Uri? = null
     private var currentResult: List<Classifications>? = null
+    private val mainViewModel: MainViewModel by viewModels()
 
     private val launcherIntentCrop = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
@@ -25,7 +27,7 @@ class MainActivity : AppCompatActivity() {
         if (result.resultCode == RESULT_OK) {
             val croppedUri = UCrop.getOutput(result.data!!)
             croppedUri?.let { imageUri ->
-                currentImageUri = imageUri
+                mainViewModel.setCurrentImageUri(imageUri)
                 showToast("Gambar berhasil dicrop")
                 showImage()
                 analyzeImage()
@@ -38,9 +40,7 @@ class MainActivity : AppCompatActivity() {
     ) { result ->
         if (result.resultCode == RESULT_OK) {
             val selectedImg = result.data?.data as Uri
-            currentImageUri = selectedImg
             showToast("Gambar berhasil dipilih")
-
             startUCrop(selectedImg)
         }
     }
@@ -63,16 +63,12 @@ class MainActivity : AppCompatActivity() {
 
             },
         )
-
-        if(currentImageUri == null){
-            binding.analyzeButton.isEnabled = false
-        } else {
-            binding.analyzeButton.isEnabled = true
+        mainViewModel.currentImageUri.observe(this) {
+            showImage()
         }
 
         binding.galleryButton.setOnClickListener {
             startGallery()
-
         }
         binding.analyzeButton.setOnClickListener {
             moveToResult()
@@ -80,7 +76,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun startUCrop(selectedImg: Uri) {
-        val destinationUri = Uri.fromFile(cacheDir.resolve("cropped_image__${System.currentTimeMillis()}.jpg"))
+        val destinationUri =
+            Uri.fromFile(cacheDir.resolve("cropped_image__${System.currentTimeMillis()}.jpg"))
         val options = UCrop.Options().apply {
             setCompressionQuality(80)
             setHideBottomControls(false)
@@ -106,15 +103,17 @@ class MainActivity : AppCompatActivity() {
 
     private fun showImage() {
         // Menampilkan gambar sesuai Gallery yang dipilih.
-        currentImageUri?.let {
-            binding.previewImageView.setImageURI(it)
+        mainViewModel.currentImageUri.value?.let { uri ->
+            binding.previewImageView.setImageURI(uri)
             binding.analyzeButton.isEnabled = true
+        } ?: run {
+            binding.analyzeButton.isEnabled = false
         }
     }
 
     private fun analyzeImage() {
         // Menganalisa gambar yang berhasil ditampilkan.
-        currentImageUri?.let {
+        mainViewModel.currentImageUri.value?.let {
             imageClassifierHelper.classifyStaticImage(it)
         } ?: showToast("Pilih gambar terlebih dahulu")
 
@@ -122,7 +121,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun moveToResult() {
         val intent = Intent(this, ResultActivity::class.java).apply {
-            currentImageUri?.let {
+            mainViewModel.currentImageUri.value?.let {
                 putExtra("IMAGE_URI", it.toString())
             }
             currentResult?.firstOrNull()?.let { classifications ->
